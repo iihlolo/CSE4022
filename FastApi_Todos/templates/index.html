@@ -26,7 +26,7 @@
                 li.textContent = `${todo.title}: ${todo.description} (Due: ${todo.dueDate}) (Completed: ${todo.completed})`;
                 const editButton = document.createElement('button');
                 editButton.textContent = 'Edit';
-                editButton.onclick = () => editTodo(todo.id);
+                editButton.onclick = () => editTodo(todo);
                 const deleteButton = document.createElement('button');
                 deleteButton.textContent = 'Delete';
                 deleteButton.onclick = () => deleteTodo(todo.id);
@@ -36,20 +36,20 @@
             });
         }
 
-        async function editTodo(id) {
-            const title = prompt('Enter new title:');
-            const description = prompt('Enter new description:');
+        async function editTodo(todo) {
+            const title = prompt('Enter new title:', todo.title);
+            const description = prompt('Enter new description:', todo.description);
             const completed = confirm('Is this task completed?');
             const dueDate = prompt('Enter new due date (YYYY-MM-DD):', todo.dueDate);
-            const response = await fetch(`/todos/${id}`, {
+            const response = await fetch(`/todos/${todo.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, title, description, dueDate, completed })
+                body: JSON.stringify({ id: todo.id, title, description, dueDate, completed })
             });
             if (response.ok) {
-                fetchTodos();
-            }
+            fetchTodos();
         }
+}
 
         async function deleteTodo(id) {
             const response = await fetch(`/todos/${id}`, {
@@ -70,7 +70,7 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ id: Date.now(), title, description, completed: false })
+                body: JSON.stringify({ id: Date.now(), title, description, dueDate, completed: false })
             });
             if (response.ok) {
                 fetchTodos();
