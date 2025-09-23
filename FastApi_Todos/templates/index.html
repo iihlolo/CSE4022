@@ -12,6 +12,7 @@
     <form id="todo-form">
         <input type="text" id="title" placeholder="Title" required>
         <input type="text" id="description" placeholder="Description" required>
+        <input type="date" id="due-date" required>
         <button type="submit">Add To-Do</button>
     </form>
     <script>
@@ -22,7 +23,7 @@
             todoList.innerHTML = '';
             todos.forEach(todo => {
                 const li = document.createElement('li');
-                li.textContent = `${todo.title}: ${todo.description} (Completed: ${todo.completed})`;
+                li.textContent = `${todo.title}: ${todo.description} (Due: ${todo.dueDate}) (Completed: ${todo.completed})`;
                 const editButton = document.createElement('button');
                 editButton.textContent = 'Edit';
                 editButton.onclick = () => editTodo(todo.id);
@@ -39,12 +40,11 @@
             const title = prompt('Enter new title:');
             const description = prompt('Enter new description:');
             const completed = confirm('Is this task completed?');
+            const dueDate = prompt('Enter new due date (YYYY-MM-DD):', todo.dueDate);
             const response = await fetch(`/todos/${id}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ id, title, description, completed })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, title, description, dueDate, completed })
             });
             if (response.ok) {
                 fetchTodos();
@@ -64,6 +64,7 @@
             event.preventDefault();
             const title = document.getElementById('title').value;
             const description = document.getElementById('description').value;
+            const dueDate = document.getElementById('due-date').value;
             const response = await fetch('/todos', {
                 method: 'POST',
                 headers: {
