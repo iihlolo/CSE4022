@@ -17,23 +17,35 @@
     </form>
     <script>
         async function fetchTodos() {
-            const response = await fetch('/todos');
-            const todos = await response.json();
-            const todoList = document.getElementById('todo-list');
-            todoList.innerHTML = '';
-            todos.forEach(todo => {
-                const li = document.createElement('li');
-                li.textContent = `${todo.title}: ${todo.description} (Due: ${todo.dueDate}) (Completed: ${todo.completed})`;
-                const editButton = document.createElement('button');
-                editButton.textContent = 'Edit';
-                editButton.onclick = () => editTodo(todo);
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = 'Delete';
-                deleteButton.onclick = () => deleteTodo(todo.id);
-                li.appendChild(editButton);
-                li.appendChild(deleteButton);
-                todoList.appendChild(li);
-            });
+            try {
+                const response = await fetch('/todos');
+                if (!response.ok) throw new Error('Failed to fetch todos');
+                const todos = await response.json();
+                const todoList = document.getElementById('todo-list');
+                if (todos.length === 0) {
+                    todoList.innerHTML = '<li style="text-align: center;">No items yet.</li>';
+                    return;
+                }
+                todoList.innerHTML = '';
+                todos.forEach(todo => {
+                    const li = document.createElement('li');
+                    if (todo.completed) {
+                        li.classList.add('completed');
+                    }
+                    li.textContent = `${todo.title}: ${todo.description} (Due: ${todo.dueDate}) (Completed: ${todo.completed})`;
+                    const editButton = document.createElement('button');
+                    editButton.textContent = 'Edit';
+                    editButton.onclick = () => editTodo(todo);
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.onclick = () => deleteTodo(todo.id);
+                    li.appendChild(editButton);
+                    li.appendChild(deleteButton);
+                    todoList.appendChild(li);
+                });
+            } catch (error) {
+                console.error('Error: ', error);
+            }
         }
 
         async function editTodo(todo) {
@@ -57,7 +69,7 @@
                     method: 'DELETE'
                 });
 
-                if (!response.ok) throw new Error('Deletion failed');
+                if (!response.ok) throw new Error('Failed to delete item');
                 fetchTodos();
             } catch (error) {
                 console.error('Error: ', error);
