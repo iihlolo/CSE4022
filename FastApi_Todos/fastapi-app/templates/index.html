@@ -47,16 +47,20 @@
                 body: JSON.stringify({ id: todo.id, title, description, dueDate, completed })
             });
             if (response.ok) {
-            fetchTodos();
+                fetchTodos();
+            }
         }
-}
 
         async function deleteTodo(id) {
-            const response = await fetch(`/todos/${id}`, {
-                method: 'DELETE'
-            });
-            if (response.ok) {
+            try {
+                const response = await fetch(`/todos/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) throw new Error('Deletion failed');
                 fetchTodos();
+            } catch (error) {
+                console.error('Error: ', error);
             }
         }
 
