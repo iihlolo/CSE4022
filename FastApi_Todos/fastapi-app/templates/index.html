@@ -81,16 +81,26 @@
             const title = document.getElementById('title').value;
             const description = document.getElementById('description').value;
             const dueDate = document.getElementById('due-date').value;
-            const response = await fetch('/todos', {
+            try {
+                const response = await fetch('/todos', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ id: Date.now(), title, description, dueDate, completed: false })
+                body: JSON.stringify({
+                    id: Date.now(),
+                    title,
+                    description,
+                    dueDate,
+                    completed: false
+                })
             });
-            if (response.ok) {
-                fetchTodos();
-            }
+            if (!response.ok) throw new Error('Failed to add todo');
+            event.target.reset();
+            fetchTodos();
+        } catch (error) {
+            console.error('Error: ', error);
+        }
         });
 
         fetchTodos();
