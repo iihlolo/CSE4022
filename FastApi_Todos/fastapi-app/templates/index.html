@@ -4,17 +4,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>To-Do List</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .completed {
+            text-decoration: line-through;
+            color: #888;
+        }
+        #todo-form {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        #todo-form input, #todo-form button {
+            margin: 5px;
+            padding: 8px;
+        }
+        li {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 3px;
+        }
+        button {
+            margin-left: 10px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .edit-btn { background-color: #4CAF50; color: white; }
+        .delete-btn { background-color: #f44336; color: white; }
+        .toggle-btn { background-color: #008CBA; color: white; }
+    </style>
 </head>
 <body>
     <h1>To-Do List</h1>
     <p>Just do it!</p>
     <ul id="todo-list"></ul>
+    
     <form id="todo-form">
+        <h3>Add New To-Do</h3>
         <input type="text" id="title" placeholder="Title" required>
         <input type="text" id="description" placeholder="Description" required>
-        <input type="date" id="due-date" required>
         <button type="submit">Add To-Do</button>
     </form>
+
     <script>
         async function fetchTodos() {
             try {
@@ -22,44 +60,83 @@
                 if (!response.ok) throw new Error('Failed to fetch todos');
                 const todos = await response.json();
                 const todoList = document.getElementById('todo-list');
+                
                 if (todos.length === 0) {
                     todoList.innerHTML = '<li style="text-align: center;">No items yet.</li>';
                     return;
                 }
+                
                 todoList.innerHTML = '';
                 todos.forEach(todo => {
                     const li = document.createElement('li');
                     if (todo.completed) {
                         li.classList.add('completed');
                     }
-                    li.textContent = `${todo.title}: ${todo.description} (Due: ${todo.dueDate}) (Completed: ${todo.completed})`;
+                    
+                    // dueDate 제거하고 FastAPI 모델과 일치시킴
+                    li.innerHTML = `
+                        <strong>${todo.title}</strong>: ${todo.description} 
+                        <span style="color: ${todo.completed ? 'green' : 'orange'}">
+                            (${todo.completed ? 'Completed' : 'Pending'})
+                        </span>
+                    `;
+                    
+                    // 완료/미완료 토글 버튼
+                    const toggleButton = document.createElement('button');
+                    toggleButton.textContent = todo.completed ? 'Mark Incomplete' : 'Mark Complete';
+                    toggleButton.className = 'toggle-btn';
+                    toggleButton.onclick = () => toggleComplete(todo.id, !todo.completed);
+                    
+                    // 편집 버튼
                     const editButton = document.createElement('button');
                     editButton.textContent = 'Edit';
+                    editButton.className = 'edit-btn';
                     editButton.onclick = () => editTodo(todo);
+                    
+                    // 삭제 버튼
                     const deleteButton = document.createElement('button');
                     deleteButton.textContent = 'Delete';
+                    deleteButton.className = 'delete-btn';
                     deleteButton.onclick = () => deleteTodo(todo.id);
+                    
+                    li.appendChild(toggleButton);
                     li.appendChild(editButton);
                     li.appendChild(deleteButton);
                     todoList.appendChild(li);
                 });
             } catch (error) {
                 console.error('Error: ', error);
+                alert('Failed to load todos');
             }
         }
 
         async function editTodo(todo) {
             const title = prompt('Enter new title:', todo.title);
+            if (title === null) return; // 취소한 경우
+            
             const description = prompt('Enter new description:', todo.description);
+            if (description === null) return; // 취소한 경우
+            
             const completed = confirm('Is this task completed?');
-            const dueDate = prompt('Enter new due date (YYYY-MM-DD):', todo.dueDate);
-            const response = await fetch(`/todos/${todo.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: todo.id, title, description, dueDate, completed })
-            });
-            if (response.ok) {
+            
+            try {
+                const response = await fetch(`/todos/${todo.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    // dueDate 제거
+                    body: JSON.stringify({ 
+                        id: todo.id, 
+                        title, 
+                        description, 
+                        completed 
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Failed to update todo');
                 fetchTodos();
+            } catch (error) {
+                console.error('Error: ', error);
+                alert('Failed to update todo');
             }
         }
 
@@ -67,19 +144,31 @@
             try {
                 const todos = await fetch('/todos').then(r => r.json());
                 const todo = todos.find(t => t.id === id);
+                if (!todo) throw new Error('Todo not found');
+                
                 const response = await fetch(`/todos/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ...todo, completed })
+                    // dueDate 제거
+                    body: JSON.stringify({ 
+                        id: todo.id,
+                        title: todo.title,
+                        description: todo.description,
+                        completed 
+                    })
                 });
+                
                 if (!response.ok) throw new Error('Failed to update item status');
                 fetchTodos();
             } catch (error) {
                 console.error('Error: ', error);
+                alert('Failed to toggle completion status');
             }
         }
 
         async function deleteTodo(id) {
+            if (!confirm('Are you sure you want to delete this todo?')) return;
+            
             try {
                 const response = await fetch(`/todos/${id}`, {
                     method: 'DELETE'
@@ -89,36 +178,45 @@
                 fetchTodos();
             } catch (error) {
                 console.error('Error: ', error);
+                alert('Failed to delete todo');
             }
         }
 
         document.getElementById('todo-form').addEventListener('submit', async (event) => {
             event.preventDefault();
-            const title = document.getElementById('title').value;
-            const description = document.getElementById('description').value;
-            const dueDate = document.getElementById('due-date').value;
+            const title = document.getElementById('title').value.trim();
+            const description = document.getElementById('description').value.trim();
+            
+            if (!title || !description) {
+                alert('Please fill in both title and description');
+                return;
+            }
+            
             try {
                 const response = await fetch('/todos', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    id: Date.now(),
-                    title,
-                    description,
-                    dueDate,
-                    completed: false
-                })
-            });
-            if (!response.ok) throw new Error('Failed to add todo');
-            event.target.reset();
-            fetchTodos();
-        } catch (error) {
-            console.error('Error: ', error);
-        }
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    // dueDate 제거, FastAPI 모델과 일치시킴
+                    body: JSON.stringify({
+                        id: Date.now(), // 서버에서 덮어쓰이지만 모델 요구사항 충족
+                        title,
+                        description,
+                        completed: false
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Failed to add todo');
+                event.target.reset();
+                fetchTodos();
+            } catch (error) {
+                console.error('Error: ', error);
+                alert('Failed to add todo');
+            }
         });
 
+        // 페이지 로드 시 todos 가져오기
         fetchTodos();
     </script>
 </body>
