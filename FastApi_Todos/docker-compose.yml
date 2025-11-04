@@ -9,7 +9,7 @@ services:
     ports:
       - "8008:5001"
 
-sonarqube:
+  sonarqube:
     image: sonarqube:latest
     container_name: sonarqube
     ports:
