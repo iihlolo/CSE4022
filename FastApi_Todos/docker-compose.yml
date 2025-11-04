@@ -1,25 +1,29 @@
-version: "3.7"
+version: "3.8"  # 최신 버전으로 업데이트
 
 services:
   fastapi-app:
     build:
-      context: ./fastapi-app      # Dockerfile이 위치한 디렉토리 경로
-      dockerfile: Dockerfile      # Dockerfile 이름 (생략 가능, 기본값은 'Dockerfile')
+      context: ./fastapi-app
+      dockerfile: Dockerfile
     container_name: FastApi-app
     ports:
-      - "8008:5001"
+      - "8008:5001"  # 기존 포트 설정 유지
     networks:
       - sonar-network
     depends_on:
-      - sonarqube
+      sonarqube:
+        condition: service_healthy  # SonarQube가 준비된 후 시작
+    volumes:
+      - ./fastapi-app:/app
 
   sonarqube:
-    image: sonarqube:9.9-community
+    image: sonarqube:9.9-community  # 안정적인 커뮤니티 버전
     container_name: sonarqube
     ports:
       - "9000:9000"
     environment:
-      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true  # 메모리 제한 환경에서 유용한 옵션
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+      - SONAR_JDBC_URL=jdbc:h2:mem:sonar
     volumes:
       - sonarqube_conf:/opt/sonarqube/conf
       - sonarqube_data:/opt/sonarqube/data
@@ -27,11 +31,17 @@ services:
       - sonarqube_extensions:/opt/sonarqube/extensions
     networks:
       - sonar-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:9000/api/system/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
 
 networks:
   sonar-network:
     driver: bridge
-      
+
 volumes:
   sonarqube_conf:
   sonarqube_data:
