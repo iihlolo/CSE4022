@@ -8,9 +8,13 @@ services:
     container_name: FastApi-app
     ports:
       - "8008:5001"
+    networks:
+      - sonar-network
+    depends_on:
+      - sonarqube
 
   sonarqube:
-    image: sonarqube:latest
+    image: sonarqube:9.9-community
     container_name: sonarqube
     ports:
       - "9000:9000"
@@ -21,6 +25,12 @@ services:
       - sonarqube_data:/opt/sonarqube/data
       - sonarqube_logs:/opt/sonarqube/logs
       - sonarqube_extensions:/opt/sonarqube/extensions
+    networks:
+      - sonar-network
+
+networks:
+  sonar-network:
+    driver: bridge
       
 volumes:
   sonarqube_conf:
