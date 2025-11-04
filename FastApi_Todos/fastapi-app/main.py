@@ -48,7 +48,7 @@ def get_todos():
 def create_todo(todo: TodoItem):
     todos = load_todos()
     # ID 자동 할당
-    todo.id = get_next_id()
+    todo.id = get_next_id(todos)
     todos.append(todo.dict())
     save_todos(todos)
     return todo
