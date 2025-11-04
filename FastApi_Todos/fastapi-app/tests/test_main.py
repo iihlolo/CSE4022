@@ -33,7 +33,9 @@ def test_create_todo():
     todo = {"id": 1, "title": "Test", "description": "Test description", "completed": False}
     response = client.post("/todos", json=todo)
     assert response.status_code == 200
-    assert response.json()["title"] == "Test"
+    returned_todo = response.json()
+    assert returned_todo["title"] == "Test"
+    assert "id" in returned_todo
 
 def test_create_todo_invalid():
     todo = {"id": 1, "title": "Test"}
@@ -62,5 +64,5 @@ def test_delete_todo():
     
 def test_delete_todo_not_found():
     response = client.delete("/todos/1")
-    assert response.status_code == 200
-    assert response.json()["message"] == "To-Do item deleted"
+    assert response.status_code == 404
+    assert response.json()["detail"] == "To-Do item not found"
