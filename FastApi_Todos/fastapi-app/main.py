@@ -32,7 +32,7 @@ def save_todos(todos):
         json.dump(todos, file, indent=4, ensure_ascii=False)
 
 # 다음 사용 가능한 ID 생성
-def get_next_id(todos):
+def get_next_id():
     todos = load_todos()
     if todos:
         return max(t["id"] for t in todos) + 1
@@ -48,7 +48,7 @@ def get_todos():
 def create_todo(todo: TodoItem):
     todos = load_todos()
     # ID 자동 할당
-    todo.id = get_next_id(todos)
+    todo.id = get_next_id()
     todos.append(todo.dict())
     save_todos(todos)
     return todo
