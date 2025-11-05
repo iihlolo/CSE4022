@@ -109,7 +109,7 @@
                     //기한 표시
                     let dueDateDisplay = '';
                     if (todo.due_date) {
-                        const dueDate = new Date(todo.dueDate);
+                        const dueDate = new Date(todo.due_date);
                         const formattedDate = dueDate.toLocaleDateString();
                         const dueDateClass = todo.expired? 'due-date expired' : 'due-date';
                         dueDateDisplay = `<span class="${dueDateClass}">Due: ${formattedDate}</span>`;
