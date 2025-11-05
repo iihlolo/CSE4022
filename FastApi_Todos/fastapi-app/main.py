@@ -6,6 +6,7 @@ import os
 from datetime import date
 from typing import Optional
 
+TODO_NOT_FOUND_MSG = "To-Do item not found"
 
 app = FastAPI()
 
@@ -94,7 +95,7 @@ def update_todo(todo_id: int, updated_todo: TodoItem):
             todos[i] = updated_todo.dict()
             save_todos(todos)
             return updated_todo
-    raise HTTPException(status_code=404, detail="To-Do item not found")
+    raise HTTPException(status_code=404, detail=TODO_NOT_FOUND_MSG)
 
 # To-Do 항목 완료 상태 토글
 @app.patch("/todos/{todo_id}/toggle", response_model=TodoItem)
@@ -106,7 +107,7 @@ def toggle_todo_completion(todo_id: int):
             todos[i] = todo
             save_todos(todos)
             return TodoItem(**todo)
-    raise HTTPException(status_code=404, detail="To-Do item not found")
+    raise HTTPException(status_code=404, detail=TODO_NOT_FOUND_MSG)
 
 # To-Do 항목 삭제
 @app.delete("/todos/{todo_id}", response_model=dict)
@@ -115,7 +116,7 @@ def delete_todo(todo_id: int):
     original_count = len(todos)
     todos = [todo for todo in todos if todo["id"] != todo_id]
     if len(todos) == original_count:
-        raise HTTPException(status_code=404, detail="To-Do item not found")
+        raise HTTPException(status_code=404, detail=TODO_NOT_FOUND_MSG)
     save_todos(todos)
     return {"message": "To-Do item deleted"}
 
