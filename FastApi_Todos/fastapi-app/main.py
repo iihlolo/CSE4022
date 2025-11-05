@@ -65,6 +65,18 @@ def update_todo(todo_id: int, updated_todo: TodoItem):
             return updated_todo
     raise HTTPException(status_code=404, detail="To-Do item not found")
 
+# To-Do 항목 완료 상태 토글
+@app.patch("/todos/{todo_id}/toggle", response_model=TodoItem)
+def toggle_todo_completion(todo_id: int):
+    todos = load_todos()
+    for i, todo in enumerate(todos):
+        if todo["id"] == todo_id:
+            todo["completed"] = not todo["completed"]
+            todos[i] = todo
+            save_todos(todos)
+            return TodoItem(**todo)
+    raise HTTPException(status_code=404, detail="To-Do item not found")
+
 # To-Do 항목 삭제
 @app.delete("/todos/{todo_id}", response_model=dict)
 def delete_todo(todo_id: int):

@@ -66,3 +66,58 @@ def test_delete_todo_not_found():
     response = client.delete("/todos/1")
     assert response.status_code == 404
     assert response.json()["detail"] == "To-Do item not found"
+
+def test_toggle_todo_completed():
+    todo = TodoItem(id=1, title="Test", description="Test description", completed=False)
+    save_todos([todo.dict()])
+    response = client.patch("/todos/1/toggle")
+    assert response.status_code == 200
+    assert response.json()["completed"] == True
+    assert response.json()["title"] == "Test"
+
+def test_toggle_todo_uncompleted():
+    todo = TodoItem(id=1, title="Test", description="Test description", completed=True)
+    save_todos([todo.dict()])
+    response = client.patch("/todos/1/toggle")
+    assert response.status_code == 200
+    assert response.json()["completed"] == False
+    assert response.json()["title"] == "Test"
+
+def test_toggle_todo_multiple_times():
+    todo = TodoItem(id=1, title="Test", description="Test description", completed=False)
+    save_todos([todo.dict()])
+    
+    response1 = client.patch("/todos/1/toggle")
+    assert response1.status_code == 200
+    assert response1.json()["completed"] == True
+    
+    response2 = client.patch("/todos/1/toggle")
+    assert response2.status_code == 200
+    assert response2.json()["completed"] == False
+    
+    response3 = client.patch("/todos/1/toggle")
+    assert response3.status_code == 200
+    assert response3.json()["completed"] == True
+
+def test_toggle_todo_not_found():
+    response = client.patch("/todos/1/toggle")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "To-Do item not found"
+
+def test_toggle_todo_with_multiple_items():
+    todos = [
+        TodoItem(id=1, title="Test1", description="Test description1", completed=False),
+        TodoItem(id=2, title="Test2", description="Test description2", completed=True),
+        TodoItem(id=3, title="Test3", description="Test description3", completed=False)
+    ]
+    save_todos([todo.dict() for todo in todos])
+    
+    response = client.patch("/todos/2/toggle")
+    assert response.status_code == 200
+    assert response.json()["completed"] == False
+    
+    all_todos = client.get("/todos").json()
+    assert len(all_todos) == 3
+    assert all_todos[0]["completed"] == False
+    assert all_todos[1]["completed"] == False
+    assert all_todos[2]["completed"] == False

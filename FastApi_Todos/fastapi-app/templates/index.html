@@ -39,6 +39,7 @@
         .edit-btn { background-color: #4CAF50; color: white; }
         .delete-btn { background-color: #f44336; color: white; }
         .toggle-btn { background-color: #008CBA; color: white; }
+        .toggle-btn.completed { background-color: #28a745; }
     </style>
 </head>
 <body>
@@ -85,7 +86,7 @@
                     const toggleButton = document.createElement('button');
                     toggleButton.textContent = todo.completed ? 'Mark Incomplete' : 'Mark Complete';
                     toggleButton.className = 'toggle-btn';
-                    toggleButton.onclick = () => toggleComplete(todo.id, !todo.completed);
+                    toggleButton.onclick = () => toggleTodoCompletion(todo.id);
                     
                     // 편집 버튼
                     const editButton = document.createElement('button');
@@ -140,29 +141,26 @@
             }
         }
 
-        async function toggleComplete(id, completed) {
+        async function toggleTodoCompletion(todoId) {
             try {
-                const todos = await fetch('/todos').then(r => r.json());
-                const todo = todos.find(t => t.id === id);
-                if (!todo) throw new Error('Todo not found');
-                
-                const response = await fetch(`/todos/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    // dueDate 제거
-                    body: JSON.stringify({ 
-                        id: todo.id,
-                        title: todo.title,
-                        description: todo.description,
-                        completed 
-                    })
+                const response = await fetch(`/todos/${todoId}/toggle`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
                 });
-                
-                if (!response.ok) throw new Error('Failed to update item status');
+        
+                if (!response.ok) {
+                    throw new Error('Failed to toggle todo completion');
+                }
+        
+                const updatedTodo = await response.json();
+                console.log('Todo updated:', updatedTodo);
+        
                 fetchTodos();
             } catch (error) {
-                console.error('Error: ', error);
-                alert('Failed to toggle completion status');
+                console.error('Error:', error);
+                alert('할일 상태 변경에 실패했습니다.');
             }
         }
 
