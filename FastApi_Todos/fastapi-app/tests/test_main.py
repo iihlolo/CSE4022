@@ -24,7 +24,7 @@ def test_get_todos_empty():
     assert response.json() == []
 
 def test_create_todo():
-    todo = {"id": 1, "title": "Test", "description": "Test description", "completed": False}
+    todo = {"title": "Test", "description": "Test description", "completed": False}
     response = client.post("/todos", json=todo)
     assert response.status_code == 200
     returned_todo = response.json()
@@ -32,20 +32,20 @@ def test_create_todo():
     assert "id" in returned_todo
 
 def test_create_todo_invalid():
-    todo = {"id": 1, "title": "Test"}  # description 누락
+    todo = {"title": "Test"}  # description 누락
     response = client.post("/todos", json=todo)
     assert response.status_code == 422
 
 def test_update_todo():
     todo = TodoItem(id=1, title="Test", description="Test description", completed=False)
     save_todos([todo.dict()])
-    updated_todo = {"id": 1, "title": "Updated", "description": "Updated description", "completed": True}
+    updated_todo = {"title": "Updated", "description": "Updated description", "completed": True}
     response = client.put("/todos/1", json=updated_todo)
     assert response.status_code == 200
     assert response.json()["title"] == "Updated"
 
 def test_update_todo_not_found():
-    response = client.put("/todos/1", json={"id": 1, "title": "Updated", "description": "Updated", "completed": True})
+    response = client.put("/todos/1", json={"title": "Updated", "description": "Updated", "completed": True})
     assert response.status_code == 404
 
 def test_delete_todo():
@@ -61,7 +61,6 @@ def test_delete_todo_not_found():
 
 # ===== 토글 기능 테스트 =====
 def test_toggle_todo():
-    """토글 기능 종합 테스트 (False->True->False)"""
     todo = TodoItem(id=1, title="Test", description="Test description", completed=False)
     save_todos([todo.dict()])
     
@@ -80,13 +79,12 @@ def test_toggle_todo_not_found():
     assert response.status_code == 404
 
 def test_create_todo_with_due_date():
-    todo = {"id": 1, "title": "Test with due date", "description": "Test description", "completed": False, "due_date": "2024-12-31"}
+    todo = {"title": "Test with due date", "description": "Test description", "completed": False, "due_date": "2024-12-31"}
     response = client.post("/todos", json=todo)
     assert response.status_code == 200
     assert response.json()["due_date"] == "2024-12-31"
 
 def test_expired_todos():
-    """만료된 할일 테스트 (expired 상태 확인 + /todos/expired 엔드포인트)"""
     yesterday = (date.today() - timedelta(days=1)).isoformat()
     tomorrow = (date.today() + timedelta(days=1)).isoformat()
     
@@ -111,7 +109,6 @@ def test_expired_todos():
     assert expired_todos[0]["title"] == "Expired"
 
 def test_is_expired_function():
-    """만료 확인 함수 테스트"""
     from main import is_expired
     
     yesterday = (date.today() - timedelta(days=1)).isoformat()
