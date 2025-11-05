@@ -121,3 +121,55 @@ def test_toggle_todo_with_multiple_items():
     assert all_todos[0]["completed"] == False
     assert all_todos[1]["completed"] == False
     assert all_todos[2]["completed"] == False
+
+def test_create_todo_with_due_date():
+    todo = {
+        "id": 1, 
+        "title": "Test with due date", 
+        "description": "Test description", 
+        "completed": False,
+        "dueDate": "2024-12-31"
+    }
+    response = client.post("/todos", json=todo)
+    assert response.status_code == 200
+    returned_todo = response.json()
+    assert returned_todo["dueDate"] == "2024-12-31"
+
+def test_get_todos_with_expired_status():
+    from datetime import date, timedelta
+    
+    # 어제 날짜로 만료된 할일 생성
+    yesterday = (date.today() - timedelta(days=1)).isoformat()
+    todo = TodoItem(
+        id=1, 
+        title="Expired todo", 
+        description="This should be expired", 
+        completed=False,
+        dueDate=yesterday
+    )
+    save_todos([todo.dict()])
+    
+    response = client.get("/todos")
+    assert response.status_code == 200
+    todos = response.json()
+    assert len(todos) == 1
+    assert todos[0]["expired"] == True
+
+def test_get_expired_todos():
+    from datetime import date, timedelta
+    
+    yesterday = (date.today() - timedelta(days=1)).isoformat()
+    tomorrow = (date.today() + timedelta(days=1)).isoformat()
+    
+    todos = [
+        TodoItem(id=1, title="Expired", description="Expired todo", completed=False, dueDate=yesterday),
+        TodoItem(id=2, title="Not expired", description="Future todo", completed=False, dueDate=tomorrow),
+        TodoItem(id=3, title="Completed expired", description="Completed", completed=True, dueDate=yesterday)
+    ]
+    save_todos([todo.dict() for todo in todos])
+    
+    response = client.get("/todos/expired")
+    assert response.status_code == 200
+    expired_todos = response.json()
+    assert len(expired_todos) == 1  # 완료되지 않은 만료된 할일만
+    assert expired_todos[0]["title"] == "Expired"

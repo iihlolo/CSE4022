@@ -3,6 +3,9 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 import json
 import os
+from datetime import date
+from typing import Optional
+
 
 app = FastAPI()
 
@@ -12,6 +15,7 @@ class TodoItem(BaseModel):
     title: str
     description: str
     completed: bool
+    due_date: Optional[str] = None
 
 # JSON 파일 경로
 TODO_FILE = "todo.json"
@@ -38,10 +42,23 @@ def get_next_id():
         return max(t["id"] for t in todos) + 1
     return 1
 
+# 기한 만료 여부 확인
+def is_expired(due_date_str: str) -> bool:
+    if not due_date_str:
+        return False
+    try:
+        due_date = date.fromisoformat(due_date_str)
+        return due_date < date.today()
+    except ValueError:
+        return False
+
 # To-Do 목록 조회
-@app.get("/todos", response_model=list[TodoItem])
+@app.get("/todos", response_model=list[dict])
 def get_todos():
-    return load_todos()
+    todos = load_todos()
+    for todo in todos:
+        todo["expired"] = is_expired(todo.get("due_date"))
+    return todos
 
 # 신규 To-Do 항목 추가
 @app.post("/todos", response_model=TodoItem)
@@ -87,6 +104,17 @@ def delete_todo(todo_id: int):
         raise HTTPException(status_code=404, detail="To-Do item not found")
     save_todos(todos)
     return {"message": "To-Do item deleted"}
+
+# 만료된 할일 목록 조회
+@app.get("/todos/expired")
+def get_expired_todos():
+    todos = load_todos()
+    expired_todos = []
+    for todo in todos:
+        if is_expired(todo.get("dueDate")) and not todo.get("completed", False):
+            todo["expired"] = True
+            expired_todos.append(todo)
+    return expired_todos
 
 # HTML 파일 서빙
 @app.get("/", response_class=HTMLResponse)

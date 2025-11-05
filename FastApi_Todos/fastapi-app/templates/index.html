@@ -15,6 +15,14 @@
             text-decoration: line-through;
             color: #888;
         }
+        .expired {
+            border-left: 4px solid #dc3545;
+            background-color: #f8d7da;
+        }
+        .expired .status {
+            color: #dc3545 !important;
+            font-weight: bold;
+        }
         #todo-form {
             margin: 20px 0;
             padding: 20px;
@@ -40,6 +48,8 @@
         .delete-btn { background-color: #f44336; color: white; }
         .toggle-btn { background-color: #008CBA; color: white; }
         .toggle-btn.completed { background-color: #28a745; }
+        .due-date { font-size: 0.9em; color: #666; margin-left: 10px; }
+        .due-date.expired { color: #dc3545; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -51,6 +61,7 @@
         <h3>Add New To-Do</h3>
         <input type="text" id="title" placeholder="Title" required>
         <input type="text" id="description" placeholder="Description" required>
+        <input type="date" id="due-date" placeholder="Due Date(optional)">
         <button type="submit">Add To-Do</button>
     </form>
 
@@ -70,15 +81,44 @@
                 todoList.innerHTML = '';
                 todos.forEach(todo => {
                     const li = document.createElement('li');
+                    
+                    // 완료된 항목에 completed 클래스 추가
                     if (todo.completed) {
                         li.classList.add('completed');
                     }
                     
-                    // dueDate 제거하고 FastAPI 모델과 일치시킴
+                    // 만료된 항목에 expired 클래스 추가
+                    if (todo.expired && !todo.completed) {
+                        li.classList.add('expired');
+                    }
+
+                    // 상태 텍스트 결정
+                    let statusText = '';
+                    let statusColor = '';
+                    if (todo.completed) {
+                        statusText = 'Completed';
+                        statusColor = 'green';
+                    } else if (todo.expired) {
+                        statusText = 'Expired';
+                        statusColor = 'red';
+                    } else {
+                        statusText = 'Pending';
+                        statusColor = 'orange';
+                    }
+
+                    //기한 표시
+                    let dueDateDisplay = '';
+                    if (todo.due_date) {
+                        const dueDate = new Date(todo.dueDate);
+                        const formattedDate = dueDate.toLocaleDateString();
+                        const dueDateClass = todo.expired? 'due-date expired' : 'due-date';
+                        dueDateDisplay = `<span class="${dueDateClass}">Due: ${formattedDate}</span>`;
+                    }
+
                     li.innerHTML = `
-                        <strong>${todo.title}</strong>: ${todo.description} 
-                        <span style="color: ${todo.completed ? 'green' : 'orange'}">
-                            (${todo.completed ? 'Completed' : 'Pending'})
+                        <strong>${todo.title}</strong>: ${todo.description}
+                        ${dueDateDisplay}
+                        <span class="status" style="color: ${statusColor}">(${statusText})
                         </span>
                     `;
                     
@@ -113,23 +153,26 @@
 
         async function editTodo(todo) {
             const title = prompt('Enter new title:', todo.title);
-            if (title === null) return; // 취소한 경우
+            if (title === null) return;
             
             const description = prompt('Enter new description:', todo.description);
-            if (description === null) return; // 취소한 경우
+            if (description === null) return;
             
+            const dueDate = prompt('Enter due date (YYYY-MM-DD) or leave empty:', todo.due_date || '');
+            if (dueDate === null) return;
+
             const completed = confirm('Is this task completed?');
             
             try {
                 const response = await fetch(`/todos/${todo.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    // dueDate 제거
                     body: JSON.stringify({ 
                         id: todo.id, 
                         title, 
                         description, 
-                        completed 
+                        completed,
+                        dueDate: dueDate || null 
                     })
                 });
                 
@@ -184,7 +227,8 @@
             event.preventDefault();
             const title = document.getElementById('title').value.trim();
             const description = document.getElementById('description').value.trim();
-            
+            const dueDate = document.getElementById('due-date').value || null;
+
             if (!title || !description) {
                 alert('Please fill in both title and description');
                 return;
@@ -196,12 +240,12 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    // dueDate 제거, FastAPI 모델과 일치시킴
                     body: JSON.stringify({
-                        id: Date.now(), // 서버에서 덮어쓰이지만 모델 요구사항 충족
+                        id: Date.now(), // 어차피 덮어쓸건데 필요한가?
                         title,
                         description,
-                        completed: false
+                        completed: false,
+                        dueDate: dueDate
                     })
                 });
                 
