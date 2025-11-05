@@ -33,6 +33,8 @@ class TodoUpdate(BaseModel):
     due_date: Optional[str] = None
 
 class TodoResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: int
     title: str
     description: str

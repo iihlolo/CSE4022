@@ -68,7 +68,8 @@
     <script>
         async function fetchTodos() {
             try {
-                const response = await fetch('/todos');
+                const BASE_URL = window.location.origin;
+                const response = await fetch(`${BASE_URL}/todos`);
                 if (!response.ok) throw new Error('Failed to fetch todos');
                 const todos = await response.json();
                 const todoList = document.getElementById('todo-list');
