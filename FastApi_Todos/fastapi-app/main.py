@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, computed_field
 import json
 import os
 from datetime import date
@@ -15,7 +15,22 @@ class TodoItem(BaseModel):
     title: str
     description: str
     completed: bool
+    due_date: Optional[str] = Field(None, alias="dueDate")
+
+    class Config:
+        allow_population_by_field_name = True
+
+class TodoResponse(BaseModel):
+    id: int
+    title: str
+    description: str
+    completed: bool
     due_date: Optional[str] = None
+
+    @computed_field
+    @property
+    def expired(self) -> bool:
+        return is_expired(self.due_date) if self.due_date else False
 
 # JSON 파일 경로
 TODO_FILE = "todo.json"
@@ -43,22 +58,20 @@ def get_next_id():
     return 1
 
 # 기한 만료 여부 확인
-def is_expired(due_date_str: str) -> bool:
+def is_expired(due_date_str: Optional[str]) -> bool:
     if not due_date_str:
         return False
     try:
         due_date = date.fromisoformat(due_date_str)
         return due_date < date.today()
-    except ValueError:
+    except (ValueError, TypeError):
         return False
 
 # To-Do 목록 조회
-@app.get("/todos", response_model=list[dict])
+@app.get("/todos", response_model=list[TodoResponse])
 def get_todos():
     todos = load_todos()
-    for todo in todos:
-        todo["expired"] = is_expired(todo.get("due_date"))
-    return todos
+    return [TodoResponse(**todo) for todo in todos]
 
 # 신규 To-Do 항목 추가
 @app.post("/todos", response_model=TodoItem)
@@ -66,7 +79,8 @@ def create_todo(todo: TodoItem):
     todos = load_todos()
     # ID 자동 할당
     todo.id = get_next_id()
-    todos.append(todo.dict())
+    todo_dict = todo.dict(by_alias=True)
+    todos.append(todo_dict)
     save_todos(todos)
     return todo
 
@@ -106,14 +120,14 @@ def delete_todo(todo_id: int):
     return {"message": "To-Do item deleted"}
 
 # 만료된 할일 목록 조회
-@app.get("/todos/expired")
+@app.get("/todos/expired", response_model=list[TodoResponse])
 def get_expired_todos():
     todos = load_todos()
     expired_todos = []
     for todo in todos:
-        if is_expired(todo.get("dueDate")) and not todo.get("completed", False):
-            todo["expired"] = True
-            expired_todos.append(todo)
+        todo_response = TodoResponse(**todo)
+        if todo_response.expired and not todo.get("completed", False):
+            expired_todos.append(todo_response)
     return expired_todos
 
 # HTML 파일 서빙
