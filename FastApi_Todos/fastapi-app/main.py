@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, computed_field, ConfigDict
 import json
 import os
 from datetime import date
@@ -12,14 +12,13 @@ app = FastAPI()
 
 # To-Do 항목 모델
 class TodoItem(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     id: int
     title: str
     description: str
     completed: bool
     due_date: Optional[str] = None
-
-    class Config:
-        allow_population_by_field_name = True
 
 class TodoCreate(BaseModel):
     title: str
@@ -108,9 +107,9 @@ def create_todo(todo: TodoCreate):
         completed=todo.completed,
         due_date=todo.due_date
     )
-    todos.append(new_todo.dict())
+    todos.append(new_todo.model_dump())
     save_todos(todos)
-    return todo
+    return new_todo
 
 # To-Do 항목 수정
 @app.put("/todos/{todo_id}", response_model=TodoItem)
@@ -125,7 +124,7 @@ def update_todo(todo_id: int, updated_todo: TodoUpdate):
                 completed=updated_todo.completed,
                 due_date=updated_todo.due_date
             )
-            todos[i] = updated_item.dict()
+            todos[i] = updated_item.model_dump()
             save_todos(todos)
             return updated_item
     raise HTTPException(status_code=404, detail=TODO_NOT_FOUND_MSG)
