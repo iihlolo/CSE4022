@@ -167,8 +167,7 @@
                 const response = await fetch(`/todos/${todo.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        id: todo.id, 
+                    body: JSON.stringify({  
                         title, 
                         description, 
                         completed,
@@ -241,7 +240,6 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        id: Date.now(), // 어차피 덮어쓸건데 필요한가?
                         title,
                         description,
                         completed: false,

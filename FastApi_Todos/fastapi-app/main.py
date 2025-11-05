@@ -21,6 +21,18 @@ class TodoItem(BaseModel):
     class Config:
         allow_population_by_field_name = True
 
+class TodoCreate(BaseModel):
+    title: str
+    description: str
+    completed: bool = False
+    due_date: Optional[str] = None
+
+class TodoUpdate(BaseModel):
+    title: str
+    description: str
+    completed: bool
+    due_date: Optional[str] = None
+
 class TodoResponse(BaseModel):
     id: int
     title: str
@@ -68,6 +80,17 @@ def is_expired(due_date_str: Optional[str]) -> bool:
     except (ValueError, TypeError):
         return False
 
+# 만료된 할일 목록 조회
+@app.get("/todos/expired", response_model=list[TodoResponse])
+def get_expired_todos():
+    todos = load_todos()
+    expired_todos = []
+    for todo in todos:
+        todo_response = TodoResponse(**todo)
+        if todo_response.expired and not todo.get("completed", False):
+            expired_todos.append(todo_response)
+    return expired_todos
+
 # To-Do 목록 조회
 @app.get("/todos", response_model=list[TodoResponse])
 def get_todos():
@@ -76,25 +99,35 @@ def get_todos():
 
 # 신규 To-Do 항목 추가
 @app.post("/todos", response_model=TodoItem)
-def create_todo(todo: TodoItem):
+def create_todo(todo: TodoCreate):
     todos = load_todos()
-    # ID 자동 할당
-    todo.id = get_next_id()
-    todo_dict = todo.dict(by_alias=True)
-    todos.append(todo_dict)
+    new_todo = TodoItem(
+        id=get_next_id(),
+        title=todo.title,
+        description=todo.description,
+        completed=todo.completed,
+        due_date=todo.due_date
+    )
+    todos.append(new_todo.dict())
     save_todos(todos)
     return todo
 
 # To-Do 항목 수정
 @app.put("/todos/{todo_id}", response_model=TodoItem)
-def update_todo(todo_id: int, updated_todo: TodoItem):
+def update_todo(todo_id: int, updated_todo: TodoUpdate):
     todos = load_todos()
     for i, todo in enumerate(todos):
         if todo["id"] == todo_id:
-            updated_todo.id = todo_id  # ID는 변경하지 않음
-            todos[i] = updated_todo.dict()
+            updated_item = TodoItem(
+                id=todo_id,
+                title=updated_todo.title,
+                description=updated_todo.description,
+                completed=updated_todo.completed,
+                due_date=updated_todo.due_date
+            )
+            todos[i] = updated_item.dict()
             save_todos(todos)
-            return updated_todo
+            return updated_item
     raise HTTPException(status_code=404, detail=TODO_NOT_FOUND_MSG)
 
 # To-Do 항목 완료 상태 토글
@@ -119,17 +152,6 @@ def delete_todo(todo_id: int):
         raise HTTPException(status_code=404, detail=TODO_NOT_FOUND_MSG)
     save_todos(todos)
     return {"message": "To-Do item deleted"}
-
-# 만료된 할일 목록 조회
-@app.get("/todos/expired", response_model=list[TodoResponse])
-def get_expired_todos():
-    todos = load_todos()
-    expired_todos = []
-    for todo in todos:
-        todo_response = TodoResponse(**todo)
-        if todo_response.expired and not todo.get("completed", False):
-            expired_todos.append(todo_response)
-    return expired_todos
 
 # HTML 파일 서빙
 @app.get("/", response_class=HTMLResponse)
