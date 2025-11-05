@@ -79,12 +79,11 @@ def test_toggle_todo_not_found():
     response = client.patch("/todos/1/toggle")
     assert response.status_code == 404
 
-# ===== 기한(dueDate) 기능 테스트 =====
 def test_create_todo_with_due_date():
-    todo = {"id": 1, "title": "Test with due date", "description": "Test description", "completed": False, "dueDate": "2024-12-31"}
+    todo = {"id": 1, "title": "Test with due date", "description": "Test description", "completed": False, "due_date": "2024-12-31"}
     response = client.post("/todos", json=todo)
     assert response.status_code == 200
-    assert response.json()["dueDate"] == "2024-12-31"
+    assert response.json()["due_date"] == "2024-12-31"
 
 def test_expired_todos():
     """만료된 할일 테스트 (expired 상태 확인 + /todos/expired 엔드포인트)"""
@@ -92,9 +91,9 @@ def test_expired_todos():
     tomorrow = (date.today() + timedelta(days=1)).isoformat()
     
     todos_data = [
-        {"id": 1, "title": "Expired", "description": "Expired todo", "completed": False, "dueDate": yesterday},
-        {"id": 2, "title": "Not expired", "description": "Future todo", "completed": False, "dueDate": tomorrow},
-        {"id": 3, "title": "Completed expired", "description": "Completed", "completed": True, "dueDate": yesterday}
+        {"id": 1, "title": "Expired", "description": "Expired todo", "completed": False, "due_date": yesterday},
+        {"id": 2, "title": "Not expired", "description": "Future todo", "completed": False, "due_date": tomorrow},
+        {"id": 3, "title": "Completed expired", "description": "Completed", "completed": True, "due_date": yesterday}
     ]
     save_todos(todos_data)
     

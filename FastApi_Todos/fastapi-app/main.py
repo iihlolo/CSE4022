@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, computed_field
 import json
 import os
 from datetime import date
@@ -15,7 +15,7 @@ class TodoItem(BaseModel):
     title: str
     description: str
     completed: bool
-    due_date: Optional[str] = Field(None, alias="dueDate")
+    due_date: Optional[str] = None
 
     class Config:
         allow_population_by_field_name = True
