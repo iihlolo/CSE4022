@@ -436,17 +436,17 @@
                     actionsDiv.className = 'todo-actions';
                     
                     const toggleButton = document.createElement('button');
-                    toggleButton.textContent = todo.completed ? 'Mark Incomplete' : 'Mark Complete';
+                    toggleButton.textContent = todo.completed ? '↩️' : '✅';
                     toggleButton.className = 'toggle-btn' + (todo.completed ? ' completed' : '');
                     toggleButton.onclick = () => toggleTodoCompletion(todo.id);
                     
                     const editButton = document.createElement('button');
-                    editButton.textContent = 'Edit';
+                    editButton.textContent = '✏️';
                     editButton.className = 'edit-btn';
                     editButton.onclick = () => editTodo(todo);
                     
                     const deleteButton = document.createElement('button');
-                    deleteButton.textContent = 'Delete';
+                    deleteButton.textContent = '❌';
                     deleteButton.className = 'delete-btn';
                     deleteButton.onclick = () => deleteTodo(todo.id);
                     
