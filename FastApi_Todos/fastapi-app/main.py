@@ -6,17 +6,21 @@ import os
 from datetime import date
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
 
 TODO_NOT_FOUND_MSG = "To-Do item not found"
 
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 또는 ["http://13.125.133.51:8008"]
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+#Prometheus 메트릭스 엔드포인트 (/metrics)
+Instrumentator().instrument(app).expose(app, endpoint="/metrics")
 
 # To-Do 항목 모델
 class TodoItem(BaseModel):
