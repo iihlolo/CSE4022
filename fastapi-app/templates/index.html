@@ -325,7 +325,7 @@
                 <input type="text" id="title" placeholder="Title" required>
             </div>
             <div class="form-group">
-                <input type="text" id="description" placeholder="Description..." required>
+                <input type="text" id="description" placeholder="Description" required>
             </div>
             <div class="form-group">
                 <input type="date" id="due-date" placeholder="Due date (optional)">
@@ -350,8 +350,40 @@
                     return;
                 }
                 
+                // 할일 정렬
+                const sortedTodos = [...todos].sort((a, b) => {
+                    // 4. 완료된 할일들 (완료된 순서)
+                    if (a.completed && !b.completed) return 1;
+                    if (!a.completed && b.completed) return -1;
+                    if (a.completed && b.completed) {
+                        return new Date(b.completed_at || 0) - new Date(a.completed_at || 0);
+                    }
+                    
+                    // 3. 기한 지난 할일들 (날짜순)
+                    if (a.expired && !b.expired) return 1;
+                    if (!a.expired && b.expired) return -1;
+                    if (a.expired && b.expired) {
+                        return new Date(a.due_date) - new Date(b.due_date);
+                    }
+                    
+                    // 1. 날짜 지정되지 않은 할일 vs 2. 마감되지 않은 할일
+                    const aHasDate = a.due_date && !a.expired;
+                    const bHasDate = b.due_date && !b.expired;
+                    
+                    if (!aHasDate && bHasDate) return -1;
+                    if (aHasDate && !bHasDate) return 1;
+                    
+                    // 2. 마감되지 않은 할일들 (날짜순)
+                    if (aHasDate && bHasDate) {
+                        return new Date(a.due_date) - new Date(b.due_date);
+                    }
+                    
+                    // 1. 날짜 지정되지 않은 할일들 (생성순 - 최신순)
+                    return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+                });
+                
                 todoList.innerHTML = '';
-                todos.forEach(todo => {
+                sortedTodos.forEach(todo => {
                     const li = document.createElement('li');
                     
                     if (todo.completed) {
