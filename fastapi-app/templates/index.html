@@ -5,65 +5,336 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>To-Do List</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
             max-width: 800px;
             margin: 0 auto;
-            padding: 20px;
         }
-        .completed {
-            text-decoration: line-through;
-            color: #888;
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
         }
-        .expired {
-            border-left: 4px solid #dc3545;
-            background-color: #f8d7da;
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
         }
-        .expired .status {
-            color: #dc3545 !important;
-            font-weight: bold;
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            font-weight: 300;
         }
+
         #todo-form {
-            margin: 20px 0;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
         }
-        #todo-form input, #todo-form button {
-            margin: 5px;
-            padding: 8px;
+
+        #todo-form h3 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #333;
         }
-        li {
-            margin: 10px 0;
-            padding: 10px;
-            border: 1px solid #eee;
-            border-radius: 3px;
+
+        .form-group {
+            margin-bottom: 15px;
         }
-        button {
-            margin-left: 10px;
-            padding: 5px 10px;
+
+        #todo-form input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        #todo-form input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        #todo-form button[type="submit"] {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
             cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-top: 10px;
         }
-        .edit-btn { background-color: #4CAF50; color: white; }
-        .delete-btn { background-color: #f44336; color: white; }
-        .toggle-btn { background-color: #008CBA; color: white; }
-        .toggle-btn.completed { background-color: #28a745; }
-        .due-date { font-size: 0.9em; color: #666; margin-left: 10px; }
-        .due-date.expired { color: #dc3545; font-weight: bold; }
+
+        #todo-form button[type="submit"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        #todo-form button[type="submit"]:active {
+            transform: translateY(0);
+        }
+
+        #todo-list {
+            list-style: none;
+        }
+
+        #todo-list li {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border-left: 4px solid #667eea;
+        }
+
+        #todo-list li:hover {
+            transform: translateX(5px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        #todo-list li.completed {
+            opacity: 0.7;
+            border-left-color: #4caf50;
+        }
+
+        #todo-list li.completed strong,
+        #todo-list li.completed .description {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        #todo-list li.expired {
+            border-left-color: #ff5252;
+            background: linear-gradient(to right, #fff5f5 0%, white 10%);
+        }
+
+        .todo-content {
+            margin-bottom: 15px;
+        }
+
+        strong {
+            font-size: 1.2rem;
+            color: #333;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .description {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .todo-meta {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .due-date {
+            font-size: 0.9rem;
+            color: #666;
+            padding: 4px 12px;
+            background: #f5f5f5;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .due-date::before {
+            content: "📅";
+        }
+
+        .due-date.expired {
+            background: #ffebee;
+            color: #d32f2f;
+            font-weight: 600;
+        }
+
+        .status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status.pending {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .status.completed {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status.expired {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .todo-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex: 1;
+        }
+
+        .toggle-btn {
+            background: #667eea;
+            color: white;
+        }
+
+        .toggle-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .toggle-btn.completed {
+            background: #4caf50;
+        }
+
+        .toggle-btn.completed:hover {
+            background: #45a049;
+        }
+
+        .edit-btn {
+            background: #26a69a;
+            color: white;
+        }
+
+        .edit-btn:hover {
+            background: #2bbbad;
+            transform: translateY(-2px);
+        }
+
+        .delete-btn {
+            background: #ff5252;
+            color: white;
+        }
+
+        .delete-btn:hover {
+            background: #ff1744;
+            transform: translateY(-2px);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .empty-state::before {
+            content: "📝";
+            font-size: 4rem;
+            display: block;
+            margin-bottom: 20px;
+        }
+
+        .empty-state p {
+            color: #999;
+            font-size: 1.1rem;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #todo-list li {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            #todo-form {
+                padding: 20px;
+            }
+
+            .todo-actions {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>To-Do List</h1>
-    <p>Just do it!</p>
-    <ul id="todo-list"></ul>
-    
-    <form id="todo-form">
-        <h3>Add New To-Do</h3>
-        <input type="text" id="title" placeholder="Title" required>
-        <input type="text" id="description" placeholder="Description" required>
-        <input type="date" id="due-date" placeholder="Due Date(optional)">
-        <button type="submit">Add To-Do</button>
-    </form>
+    <div class="container">
+        <header>
+            <h1>✨ To-Do List</h1>
+            <p class="subtitle">Organize your day, achieve your goals</p>
+        </header>
+
+        <form id="todo-form">
+            <h3>Add New Task</h3>
+            <div class="form-group">
+                <input type="text" id="title" placeholder="Task title..." required>
+            </div>
+            <div class="form-group">
+                <input type="text" id="description" placeholder="Description..." required>
+            </div>
+            <div class="form-group">
+                <input type="date" id="due-date" placeholder="Due date (optional)">
+            </div>
+            <button type="submit">Add Task</button>
+        </form>
+
+        <ul id="todo-list"></ul>
+    </div>
 
     <script>
         async function fetchTodos() {
@@ -75,7 +346,7 @@
                 const todoList = document.getElementById('todo-list');
                 
                 if (todos.length === 0) {
-                    todoList.innerHTML = '<li style="text-align: center;">No items yet.</li>';
+                    todoList.innerHTML = '<li class="empty-state"><p>No tasks yet. Add one to get started!</p></li>';
                     return;
                 }
                 
@@ -83,67 +354,74 @@
                 todos.forEach(todo => {
                     const li = document.createElement('li');
                     
-                    // 완료된 항목에 completed 클래스 추가
                     if (todo.completed) {
                         li.classList.add('completed');
                     }
                     
-                    // 만료된 항목에 expired 클래스 추가
                     if (todo.expired && !todo.completed) {
                         li.classList.add('expired');
                     }
 
-                    // 상태 텍스트 결정
                     let statusText = '';
-                    let statusColor = '';
+                    let statusClass = '';
+                    let statusDisplay = '';
                     if (todo.completed) {
                         statusText = 'Completed';
-                        statusColor = 'green';
+                        statusClass = 'completed';
+                        statusDisplay = `<span class="status ${statusClass}">${statusText}</span>`;
                     } else if (todo.expired) {
                         statusText = 'Expired';
-                        statusColor = 'red';
-                    } else {
-                        statusText = 'Pending';
-                        statusColor = 'orange';
+                        statusClass = 'expired';
+                        statusDisplay = `<span class="status ${statusClass}">${statusText}</span>`;
                     }
 
-                    //기한 표시
                     let dueDateDisplay = '';
                     if (todo.due_date) {
                         const dueDate = new Date(todo.due_date);
                         const formattedDate = dueDate.toLocaleDateString();
-                        const dueDateClass = todo.expired? 'due-date expired' : 'due-date';
-                        dueDateDisplay = `<span class="${dueDateClass}">Due: ${formattedDate}</span>`;
+                        const dueDateClass = todo.expired ? 'due-date expired' : 'due-date';
+                        dueDateDisplay = `<span class="${dueDateClass}">${formattedDate}</span>`;
                     }
 
-                    li.innerHTML = `
-                        <strong>${todo.title}</strong>: ${todo.description}
-                        ${dueDateDisplay}
-                        <span class="status" style="color: ${statusColor}">(${statusText})
-                        </span>
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'todo-content';
+                    contentDiv.innerHTML = `
+                        <strong>${todo.title}</strong>
+                        <div class="description">${todo.description}</div>
                     `;
+
+                    const metaDiv = document.createElement('div');
+                    metaDiv.className = 'todo-meta';
+                    metaDiv.innerHTML = `
+                        ${dueDateDisplay}
+                        ${statusDisplay}
+                    `;
+
+                    const actionsDiv = document.createElement('div');
+                    actionsDiv.className = 'todo-actions';
                     
-                    // 완료/미완료 토글 버튼
                     const toggleButton = document.createElement('button');
                     toggleButton.textContent = todo.completed ? 'Mark Incomplete' : 'Mark Complete';
-                    toggleButton.className = 'toggle-btn';
+                    toggleButton.className = 'toggle-btn' + (todo.completed ? ' completed' : '');
                     toggleButton.onclick = () => toggleTodoCompletion(todo.id);
                     
-                    // 편집 버튼
                     const editButton = document.createElement('button');
                     editButton.textContent = 'Edit';
                     editButton.className = 'edit-btn';
                     editButton.onclick = () => editTodo(todo);
                     
-                    // 삭제 버튼
                     const deleteButton = document.createElement('button');
                     deleteButton.textContent = 'Delete';
                     deleteButton.className = 'delete-btn';
                     deleteButton.onclick = () => deleteTodo(todo.id);
                     
-                    li.appendChild(toggleButton);
-                    li.appendChild(editButton);
-                    li.appendChild(deleteButton);
+                    actionsDiv.appendChild(toggleButton);
+                    actionsDiv.appendChild(editButton);
+                    actionsDiv.appendChild(deleteButton);
+                    
+                    li.appendChild(contentDiv);
+                    li.appendChild(metaDiv);
+                    li.appendChild(actionsDiv);
                     todoList.appendChild(li);
                 });
             } catch (error) {
@@ -257,7 +535,6 @@
             }
         });
 
-        // 페이지 로드 시 todos 가져오기
         fetchTodos();
     </script>
 </body>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .completed {
+            text-decoration: line-through;
+            color: #888;
+        }
+        .expired {
+            border-left: 4px solid #dc3545;
+            background-color: #f8d7da;
+        }
+        .expired .status {
+            color: #dc3545 !important;
+            font-weight: bold;
+        }
+        #todo-form {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        #todo-form input, #todo-form button {
+            margin: 5px;
+            padding: 8px;
+        }
+        li {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 3px;
+        }
+        button {
+            margin-left: 10px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .edit-btn { background-color: #4CAF50; color: white; }
+        .delete-btn { background-color: #f44336; color: white; }
+        .toggle-btn { background-color: #008CBA; color: white; }
+        .toggle-btn.completed { background-color: #28a745; }
+        .due-date { font-size: 0.9em; color: #666; margin-left: 10px; }
+        .due-date.expired { color: #dc3545; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>To-Do List</h1>
+    <p>Just do it!</p>
+    <ul id="todo-list"></ul>
+    
+    <form id="todo-form">
+        <h3>Add New To-Do</h3>
+        <input type="text" id="title" placeholder="Title" required>
+        <input type="text" id="description" placeholder="Description" required>
+        <input type="date" id="due-date" placeholder="Due Date(optional)">
+        <button type="submit">Add To-Do</button>
+    </form>
+
+    <script>
+        async function fetchTodos() {
+            try {
+                const BASE_URL = window.location.origin;
+                const response = await fetch(`${BASE_URL}/todos`);
+                if (!response.ok) throw new Error('Failed to fetch todos');
+                const todos = await response.json();
+                const todoList = document.getElementById('todo-list');
+                
+                if (todos.length === 0) {
+                    todoList.innerHTML = '<li style="text-align: center;">No items yet.</li>';
+                    return;
+                }
+                
+                todoList.innerHTML = '';
+                todos.forEach(todo => {
+                    const li = document.createElement('li');
+                    
+                    // 완료된 항목에 completed 클래스 추가
+                    if (todo.completed) {
+                        li.classList.add('completed');
+                    }
+                    
+                    // 만료된 항목에 expired 클래스 추가
+                    if (todo.expired && !todo.completed) {
+                        li.classList.add('expired');
+                    }
+
+                    // 상태 텍스트 결정
+                    let statusText = '';
+                    let statusColor = '';
+                    if (todo.completed) {
+                        statusText = 'Completed';
+                        statusColor = 'green';
+                    } else if (todo.expired) {
+                        statusText = 'Expired';
+                        statusColor = 'red';
+                    } else {
+                        statusText = 'Pending';
+                        statusColor = 'orange';
+                    }
+
+                    //기한 표시
+                    let dueDateDisplay = '';
+                    if (todo.due_date) {
+                        const dueDate = new Date(todo.due_date);
+                        const formattedDate = dueDate.toLocaleDateString();
+                        const dueDateClass = todo.expired? 'due-date expired' : 'due-date';
+                        dueDateDisplay = `<span class="${dueDateClass}">Due: ${formattedDate}</span>`;
+                    }
+
+                    li.innerHTML = `
+                        <strong>${todo.title}</strong>: ${todo.description}
+                        ${dueDateDisplay}
+                        <span class="status" style="color: ${statusColor}">(${statusText})
+                        </span>
+                    `;
+                    
+                    // 완료/미완료 토글 버튼
+                    const toggleButton = document.createElement('button');
+                    toggleButton.textContent = todo.completed ? 'Mark Incomplete' : 'Mark Complete';
+                    toggleButton.className = 'toggle-btn';
+                    toggleButton.onclick = () => toggleTodoCompletion(todo.id);
+                    
+                    // 편집 버튼
+                    const editButton = document.createElement('button');
+                    editButton.textContent = 'Edit';
+                    editButton.className = 'edit-btn';
+                    editButton.onclick = () => editTodo(todo);
+                    
+                    // 삭제 버튼
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.className = 'delete-btn';
+                    deleteButton.onclick = () => deleteTodo(todo.id);
+                    
+                    li.appendChild(toggleButton);
+                    li.appendChild(editButton);
+                    li.appendChild(deleteButton);
+                    todoList.appendChild(li);
+                });
+            } catch (error) {
+                console.error('Error: ', error);
+                alert('Failed to load todos');
+            }
+        }
+
+        async function editTodo(todo) {
+            const title = prompt('Enter new title:', todo.title);
+            if (title === null) return;
+            
+            const description = prompt('Enter new description:', todo.description);
+            if (description === null) return;
+            
+            const dueDate = prompt('Enter due date (YYYY-MM-DD) or leave empty:', todo.due_date || '');
+            if (dueDate === null) return;
+
+            const completed = confirm('Is this task completed?');
+            
+            try {
+                const response = await fetch(`/todos/${todo.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({  
+                        title, 
+                        description, 
+                        completed,
+                        due_date: dueDate || null 
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Failed to update todo');
+                fetchTodos();
+            } catch (error) {
+                console.error('Error: ', error);
+                alert('Failed to update todo');
+            }
+        }
+
+        async function toggleTodoCompletion(todoId) {
+            try {
+                const response = await fetch(`/todos/${todoId}/toggle`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+        
+                if (!response.ok) {
+                    throw new Error('Failed to toggle todo completion');
+                }
+        
+                const updatedTodo = await response.json();
+                console.log('Todo updated:', updatedTodo);
+        
+                fetchTodos();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('할일 상태 변경에 실패했습니다.');
+            }
+        }
+
+        async function deleteTodo(id) {
+            if (!confirm('Are you sure you want to delete this todo?')) return;
+            
+            try {
+                const response = await fetch(`/todos/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) throw new Error('Failed to delete item');
+                fetchTodos();
+            } catch (error) {
+                console.error('Error: ', error);
+                alert('Failed to delete todo');
+            }
+        }
+
+        document.getElementById('todo-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const title = document.getElementById('title').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const dueDate = document.getElementById('due-date').value || null;
+
+            if (!title || !description) {
+                alert('Please fill in both title and description');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/todos', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title,
+                        description,
+                        completed: false,
+                        due_date: dueDate
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Failed to add todo');
+                event.target.reset();
+                fetchTodos();
+            } catch (error) {
+                console.error('Error: ', error);
+                alert('Failed to add todo');
+            }
+        });
+
+        // 페이지 로드 시 todos 가져오기
+        fetchTodos();
+    </script>
+</body>
+</html>
