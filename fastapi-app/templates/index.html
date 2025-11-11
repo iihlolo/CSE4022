@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #14c9ff 0%, #015eea 100%);
+            background: linear-gradient(135deg, #73b9ee 0%, #003396 100%);
             min-height: 100vh;
             padding: 40px 20px;
         }
@@ -79,7 +79,7 @@
         #todo-form button[type="submit"] {
             width: 100%;
             padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #73b9ee 0%, #003396 100%);
             color: white;
             border: none;
             border-radius: 12px;
@@ -210,42 +210,45 @@
         }
 
         button {
-            padding: 8px 16px;
+            padding: 10px;
             border: none;
             border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
+            font-size: 1.2rem;
             cursor: pointer;
             transition: all 0.2s ease;
-            flex: 1;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .toggle-btn {
-            background: #667eea;
+            background: #4caf50;
             color: white;
         }
 
         .toggle-btn:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
+            background: #45a049;
+            transform: translateY(-2px) scale(1.1);
         }
 
         .toggle-btn.completed {
-            background: #4caf50;
+            background: #9e9e9e;
         }
 
         .toggle-btn.completed:hover {
-            background: #45a049;
+            background: #757575;
         }
 
         .edit-btn {
-            background: #26a69a;
+            background: #ffc107;
             color: white;
         }
 
         .edit-btn:hover {
-            background: #2bbbad;
-            transform: translateY(-2px);
+            background: #ffb300;
+            transform: translateY(-2px) scale(1.1);
         }
 
         .delete-btn {
@@ -255,7 +258,7 @@
 
         .delete-btn:hover {
             background: #ff1744;
-            transform: translateY(-2px);
+            transform: translateY(-2px) scale(1.1);
         }
 
         .empty-state {
@@ -322,10 +325,10 @@
         <form id="todo-form">
             <h3>Add New Task</h3>
             <div class="form-group">
-                <input type="text" id="title" placeholder="Title" required>
+                <input type="text" id="title" placeholder="Task title..." required>
             </div>
             <div class="form-group">
-                <input type="text" id="description" placeholder="Description" required>
+                <input type="text" id="description" placeholder="Description..." required>
             </div>
             <div class="form-group">
                 <input type="date" id="due-date" placeholder="Due date (optional)">
