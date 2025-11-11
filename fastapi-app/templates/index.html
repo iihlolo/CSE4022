@@ -161,7 +161,7 @@
             display: flex;
             align-items: center;
             gap: 15px;
-            margin-top: 10px;
+            margin-top: 4px;
             flex-wrap: wrap;
         }
 
@@ -211,8 +211,8 @@
         }
 
         button {
-            padding: 4px;
-            margin-top: -4px;
+            padding: 0px;
+            margin-top: -10px;
             border: 1.5px solid;
             border-radius: 50%;
             font-size: 1rem;
@@ -278,7 +278,6 @@
         }
 
         .empty-state::before {
-            content: "📝";
             font-size: 4rem;
             display: block;
             margin-bottom: 20px;
@@ -331,7 +330,6 @@
         </header>
 
         <form id="todo-form">
-            <h3>Add New Task</h3>
             <div class="form-group">
                 <input type="text" id="title" placeholder="Title" required>
             </div>
