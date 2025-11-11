@@ -15,11 +15,11 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: linear-gradient(135deg, #73b9ee 0%, #003396 100%);
             min-height: 100vh;
-            padding: 40px 20px;
+            padding: 20px 10px;
         }
 
         .container {
-            max-width: 800px;
+            max-width: 600px;
             margin: 0 auto;
         }
 
@@ -30,22 +30,22 @@
         }
 
         h1 {
-            font-size: 3rem;
+            font-size: 2rem;
             font-weight: 700;
             margin-bottom: 10px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
         }
 
         .subtitle {
-            font-size: 1.2rem;
+            font-size: 1rem;
             opacity: 0.9;
             font-weight: 300;
         }
 
         #todo-form {
             background: white;
-            padding: 30px;
-            border-radius: 20px;
+            padding: 20px;
+            border-radius: 12px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             margin-bottom: 30px;
         }
@@ -62,10 +62,10 @@
 
         #todo-form input {
             width: 100%;
-            padding: 15px;
+            padding: 10px;
             border: 2px solid #e0e0e0;
             border-radius: 12px;
-            font-size: 1rem;
+            font-size: 0.9rem;
             transition: all 0.3s ease;
             font-family: inherit;
         }
@@ -78,12 +78,12 @@
 
         #todo-form button[type="submit"] {
             width: 100%;
-            padding: 15px;
+            padding: 10px;
             background: linear-gradient(135deg, #73b9ee 0%, #003396 100%);
             color: white;
             border: none;
-            border-radius: 12px;
-            font-size: 1.1rem;
+            border-radius: 10px;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -105,12 +105,12 @@
 
         #todo-list li {
             background: white;
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #003396;
         }
 
         #todo-list li:hover {
@@ -136,6 +136,12 @@
 
         .todo-content {
             margin-bottom: 15px;
+        }
+
+        .todo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
         }
 
         strong {
@@ -211,13 +217,13 @@
 
         button {
             padding: 10px;
-            border: 2px solid;
+            border: 1.5px solid;
             border-radius: 50%;
-            font-size: 1.2rem;
+            font-size: 1rem;
             cursor: pointer;
             transition: all 0.2s ease;
-            width: 40px;
-            height: 40px;
+            width: 30px;
+            height: 30px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -442,19 +448,19 @@
                     actionsDiv.className = 'todo-actions';
                     
                     const toggleButton = document.createElement('button');
-                    toggleButton.textContent = todo.completed ? '↩️' : '✓';
+                    toggleButton.textContent = todo.completed ? '↩︎' : '✓';
                     toggleButton.className = 'toggle-btn' + (todo.completed ? ' completed' : '');
                     toggleButton.onclick = () => toggleTodoCompletion(todo.id);
                     toggleButton.title = todo.completed ? 'Mark Incomplete' : 'Mark Complete';
                     
                     const editButton = document.createElement('button');
-                    editButton.textContent = '✏️';
+                    editButton.textContent = '✎';
                     editButton.className = 'edit-btn';
                     editButton.onclick = () => editTodo(todo);
                     editButton.title = 'Edit';
                     
                     const deleteButton = document.createElement('button');
-                    deleteButton.textContent = '❌';
+                    deleteButton.textContent = '✕';
                     deleteButton.className = 'delete-btn';
                     deleteButton.onclick = () => deleteTodo(todo.id);
                     deleteButton.title = 'Delete';
@@ -463,9 +469,13 @@
                     actionsDiv.appendChild(editButton);
                     actionsDiv.appendChild(deleteButton);
                     
-                    li.appendChild(contentDiv);
+                    const headerDiv = document.createElement('div');
+                    headerDiv.className = 'todo-header';
+                    headerDiv.appendChild(contentDiv);
+                    headerDiv.appendChild(actionsDiv);
+
+                    li.appendChild(headerDiv);
                     li.appendChild(metaDiv);
-                    li.appendChild(actionsDiv);
                     todoList.appendChild(li);
                 });
             } catch (error) {
