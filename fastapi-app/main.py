@@ -1,10 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel, computed_field, ConfigDict
+from pydantic import BaseModel, computed_field, ConfigDict, Field
 import json
 import os
 from datetime import date
-from typing import Optional
+from typing import Optional, List
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
 
@@ -28,30 +28,30 @@ class TodoItem(BaseModel):
 
     id: int
     title: str
-    description: str
     completed: bool
     due_date: Optional[str] = None
+    tags: Optional[List[str]] = []
 
 class TodoCreate(BaseModel):
     title: str
-    description: str
     completed: bool = False
     due_date: Optional[str] = None
+    tags: Optional[List[str]] = []
 
 class TodoUpdate(BaseModel):
     title: str
-    description: str
     completed: bool
     due_date: Optional[str] = None
+    tags: Optional[List[str]] = []
 
 class TodoResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     title: str
-    description: str
     completed: bool
     due_date: Optional[str] = None
+    tags: List[str] = Field(default_factory=list)
 
     @computed_field
     @property
@@ -117,9 +117,9 @@ def create_todo(todo: TodoCreate):
     new_todo = TodoItem(
         id=get_next_id(),
         title=todo.title,
-        description=todo.description,
         completed=todo.completed,
-        due_date=todo.due_date
+        due_date=todo.due_date,
+        tags=todo.tags
     )
     todos.append(new_todo.model_dump())
     save_todos(todos)
@@ -134,9 +134,9 @@ def update_todo(todo_id: int, updated_todo: TodoUpdate):
             updated_item = TodoItem(
                 id=todo_id,
                 title=updated_todo.title,
-                description=updated_todo.description,
                 completed=updated_todo.completed,
-                due_date=updated_todo.due_date
+                due_date=updated_todo.due_date,
+                tags=updated_todo.tags
             )
             todos[i] = updated_item.model_dump()
             save_todos(todos)
