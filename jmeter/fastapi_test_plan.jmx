@@ -23,11 +23,11 @@
         <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
           <collectionProp name="Arguments.arguments"/>
         </elementProp>
-        <stringProp name="HTTPSampler.domain">${BASE_URL}</stringProp>
-        <stringProp name="HTTPSampler.port"></stringProp>
+        <stringProp name="HTTPSampler.domain">fastapi-app</stringProp>
+        <stringProp name="HTTPSampler.port">5001</stringProp>
         <stringProp name="HTTPSampler.connect_timeout"></stringProp>
         <stringProp name="HTTPSampler.response_timeout"></stringProp>
-        <stringProp name="HTTPSampler.protocol"></stringProp>
+        <stringProp name="HTTPSampler.protocol">http</stringProp>
         <stringProp name="HTTPSampler.contentEncoding"></stringProp>
         <stringProp name="HTTPSampler.path"></stringProp>
         <boolProp name="HTTPSampler.image_parser">false</boolProp>
@@ -52,13 +52,39 @@
 
       <hashTree>
 
+<ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="FastAPI Load Test" enabled="true">
+   ...
+</ThreadGroup>
+
+<hashTree>
+
+        <!-- Backend Listener -->
+        <BackendListener guiclass="BackendListenerGui" testclass="BackendListener" testname="InfluxDB Backend Listener" enabled="true">
+          <elementProp name="arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="influxdbMetricsSender" elementType="Argument">
+                <stringProp name="Argument.name">influxdbMetricsSender</stringProp>
+                <stringProp name="Argument.value">org.apache.jmeter.visualizers.backend.influxdb.HttpMetricsSender</stringProp>
+              </elementProp>
+              <elementProp name="influxdbUrl" elementType="Argument">
+                <stringProp name="Argument.name">influxdbUrl</stringProp>
+                <stringProp name="Argument.value">http://influxdb:8086/write?db=jmeter</stringProp>
+              </elementProp>
+              <elementProp name="summaryOnly" elementType="Argument">
+                <stringProp name="Argument.name">summaryOnly</stringProp>
+                <stringProp name="Argument.value">false</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+        </BackendListener>
+
         <!-- GET /todos -->
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GET /todos" enabled="true">
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
             <collectionProp name="Arguments.arguments"/>
           </elementProp>
-          <stringProp name="HTTPSampler.domain">localhost</stringProp>
-          <stringProp name="HTTPSampler.port">8008</stringProp>
+          <stringProp name="HTTPSampler.domain">fastapi-app</stringProp>
+          <stringProp name="HTTPSampler.port">5001</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
           <stringProp name="HTTPSampler.path">/todos</stringProp>
           <stringProp name="HTTPSampler.method">GET</stringProp>
@@ -75,8 +101,8 @@
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
             <collectionProp name="Arguments.arguments"/>
           </elementProp>
-          <stringProp name="HTTPSampler.domain">localhost</stringProp>
-          <stringProp name="HTTPSampler.port">8008</stringProp>
+          <stringProp name="HTTPSampler.domain">fastapi-app</stringProp>
+          <stringProp name="HTTPSampler.port">5001</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
           <stringProp name="HTTPSampler.path">/todos/expired</stringProp>
           <stringProp name="HTTPSampler.method">GET</stringProp>
@@ -101,8 +127,8 @@
               </elementProp>
             </collectionProp>
           </elementProp>
-          <stringProp name="HTTPSampler.domain">localhost</stringProp>
-          <stringProp name="HTTPSampler.port">8008</stringProp>
+          <stringProp name="HTTPSampler.domain">fastapi-app</stringProp>
+          <stringProp name="HTTPSampler.port">5001</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
           <stringProp name="HTTPSampler.path">/todos</stringProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>
@@ -121,8 +147,8 @@
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
             <collectionProp name="Arguments.arguments"/>
           </elementProp>
-          <stringProp name="HTTPSampler.domain">localhost</stringProp>
-          <stringProp name="HTTPSampler.port">8008</stringProp>
+          <stringProp name="HTTPSampler.domain">fastapi-app</stringProp>
+          <stringProp name="HTTPSampler.port">5001</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
           <stringProp name="HTTPSampler.path">/todos/1/toggle</stringProp>
           <stringProp name="HTTPSampler.method">PATCH</stringProp>
@@ -139,8 +165,8 @@
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
             <collectionProp name="Arguments.arguments"/>
           </elementProp>
-          <stringProp name="HTTPSampler.domain">localhost</stringProp>
-          <stringProp name="HTTPSampler.port">8008</stringProp>
+          <stringProp name="HTTPSampler.domain">fastapi-app</stringProp>
+          <stringProp name="HTTPSampler.port">5001</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
           <stringProp name="HTTPSampler.path">/todos/1</stringProp>
           <stringProp name="HTTPSampler.method">PUT</stringProp>
@@ -157,8 +183,8 @@
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
             <collectionProp name="Arguments.arguments"/>
           </elementProp>
-          <stringProp name="HTTPSampler.domain">localhost</stringProp>
-          <stringProp name="HTTPSampler.port">8008</stringProp>
+          <stringProp name="HTTPSampler.domain">fastapi-app</stringProp>
+          <stringProp name="HTTPSampler.port">5001</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
           <stringProp name="HTTPSampler.path">/todos/1</stringProp>
           <stringProp name="HTTPSampler.method">DELETE</stringProp>
