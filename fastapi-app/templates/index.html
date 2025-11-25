@@ -458,7 +458,13 @@
                     const editButton = document.createElement('button');
                     editButton.textContent = '✎';
                     editButton.className = 'edit-btn';
-                    editButton.onclick = () => editTodo(todo);
+                    editButton.onclick = () => {
+                        li.querySelector('.todo-content').style.display = 'none';
+                        li.querySelector('.todo-actions').style.display = 'none';
+
+                        const form = renderTodoForm(todo, li);
+                        li.insertBefore(form, li.firstChild);
+                    };
                     editButton.title = 'Edit';
                     
                     const deleteButton = document.createElement('button');
@@ -482,40 +488,55 @@
                 });
             } catch (error) {
                 console.error('Error: ', error);
-                alert('Failed to load todos');
+                alert('Failed to load tasks');
             }
         }
 
-        async function editTodo(todo) {
-            const title = prompt('Enter new title:', todo.title);
-            const tagInput = prompt('Enter tags (comma separated):', todo.tags ? todo.tags.join(',') : '');
-            const tags = tagInput ? tagInput.split(',').map(t => t.trim()) : [];
+        function renderTodoForm(todo = null, li = null) {
+            const title = todo?.title || '';
+            const dueDate = todo?.due_date || '';
+            const tags = todo?.tags ? todo.tags.join(', ') : '';
 
-            if (title === null) return;
-            
-            const dueDate = prompt('Enter due date (YYYY-MM-DD) or leave empty:', todo.due_date || '');
-            if (dueDate === null) return;
+            const form = document.createElement('form');
+            form.className = 'edit-todo-form';
+            form.innerHTML = `
+                <input type="text" name="title" placeholder="Title" value="${title}" required />
+                <input type="text" name="tags" placeholder="Tags (comma separated)" value="${tags}" />
+                <input type="date" name="due_date" value="${dueDate}" />
+                <button type="submit">${todo ? 'Update Task' : 'Add Task'}</button>
+                <button type="button" class="cancel-btn">Cancel</button>
+        `   ;
+            form.onsubmit = async (e) => {
+                e.preventDefault();
+                const formData = new FormData(form);
+                const data = {
+                    title: formData.get('title').trim(),
+                    due_date: formData.get('due_date') || null,
+                    tags: formData.get('tags').split(',').map(t => t.trim()),
+                    completed: todo?.completed || false
+                };
 
-            const completed = confirm('Is this task completed?');
-            
-            try {
-                const response = await fetch(`/todos/${todo.id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({  
-                        title,
-                        completed,
-                        due_date: dueDate || null,
-                        tags
-                    })
-                });
-                
-                if (!response.ok) throw new Error('Failed to update todo');
-                fetchTodos();
-            } catch (error) {
-                console.error('Error: ', error);
-                alert('Failed to update todo');
-            }
+                try {
+                    const response = await fetch(`/todos/${todo.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    if (!response.ok) throw new Error('Failed to update item');
+                    fetchTodos();
+                } catch (err) {
+                    console.error(err);
+                    alert('Failed to update task');
+                }
+            };
+
+            form.querySelector('.cancel-btn').onclick = () => {
+                form.remove();
+                li.querySelector('.todo-content').style.display = 'block';
+                li.querySelector('.todo-actions').style.display = 'flex';
+            };
+
+            return form;
         }
 
         async function toggleTodoCompletion(todoId) {
@@ -537,7 +558,7 @@
                 fetchTodos();
             } catch (error) {
                 console.error('Error:', error);
-                alert('할일 상태 변경에 실패했습니다.');
+                alert('Failed to toggle todo completion');
             }
         }
 
@@ -553,7 +574,7 @@
                 fetchTodos();
             } catch (error) {
                 console.error('Error: ', error);
-                alert('Failed to delete todo');
+                alert('Failed to delete task');
             }
         }
 
@@ -583,12 +604,12 @@
                     })
                 });
                 
-                if (!response.ok) throw new Error('Failed to add todo');
+                if (!response.ok) throw new Error('Failed to add item');
                 event.target.reset();
                 fetchTodos();
             } catch (error) {
                 console.error('Error: ', error);
-                alert('Failed to add todo');
+                alert('Failed to add task');
             }
         });
 
