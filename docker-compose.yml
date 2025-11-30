@@ -3,13 +3,17 @@ version: "3.7"
 services:
   fastapi-app:
     build:
-      context: ./fastapi-app      # Dockerfile이 위치한 디렉토리 경로
-      dockerfile: Dockerfile      # Dockerfile 이름 (생략 가능, 기본값은 'Dockerfile')
+      context: ./fastapi-app
+      dockerfile: Dockerfile
     container_name: FastApi-app
     ports:
       - "8008:5001"
     networks:
       - loadtest-net
+    depends_on:
+      - loki
+    environment:
+      - LOKI_ENDPOINT=http://loki:3100/loki/api/v1/push
 
   sonarqube:
     image: sonarqube:latest
@@ -17,44 +21,12 @@ services:
     ports:
       - "9000:9000"
     environment:
-      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true  # 메모리 제한 환경에서 유용한 옵션
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
     volumes:
       - sonarqube_conf:/opt/sonarqube/conf
       - sonarqube_data:/opt/sonarqube/data
       - sonarqube_logs:/opt/sonarqube/logs
       - sonarqube_extensions:/opt/sonarqube/extensions
-    networks:
-      - loadtest-net
-
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: prometheus
-    volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-    ports:
-      - "7070:9090"
-    command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
-    networks:
-      - loadtest-net
-
-  grafana:
-    image: grafana/grafana:latest
-    container_name: grafana
-    ports:
-      - "3000:3000"
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin  # 기본 Grafana 로그인 비밀번호
-    volumes:
-      - grafana-data:/var/lib/grafana
-    networks:
-      - loadtest-net
-
-  node-exporter:
-    image: prom/node-exporter:latest
-    container_name: node-exporter
-    ports:
-      - "7100:9100"
     networks:
       - loadtest-net
 
@@ -80,9 +52,53 @@ services:
     networks:
       - loadtest-net
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "7070:9090"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    networks:
+      - loadtest-net
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    ports:
+      - "7100:9100"
+    networks:
+      - loadtest-net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - loadtest-net
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    ports:
+      - "3100:3100"
+    networks:
+      - loadtest-net
+
 volumes:
   sonarqube_conf:
   sonarqube_data:
   sonarqube_logs:
   sonarqube_extensions:
   grafana-data:
+
+networks:
+  loadtest-net:
+    driver: bridge
