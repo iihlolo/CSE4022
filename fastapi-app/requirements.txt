@@ -1,9 +1,10 @@
 fastapi
 uvicorn[standard]
-pytest
-pytest-html
-httpx
-pytest-cov
+motor
 prometheus-fastapi-instrumentator
 prometheus-client
 python-logging-loki==0.3.1
+pytest
+pytest-html
+pytest-cov
+httpx
