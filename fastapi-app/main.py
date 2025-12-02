@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, computed_field, ConfigDict, Field
-from datetime import date
+from datetime import date, datetime
 from typing import Optional, List
 import logging
 import time
@@ -64,6 +64,8 @@ class TodoItem(BaseModel):
     completed: bool
     due_date: Optional[str] = None
     tags: Optional[List[str]] = []
+    created_at: Optional[str] = None
+    completed_at: Optional[str] = None
 
 class TodoCreate(BaseModel):
     title: str
@@ -85,6 +87,8 @@ class TodoResponse(BaseModel):
     completed: bool
     due_date: Optional[str] = None
     tags: List[str] = Field(default_factory=list)
+    created_at: Optional[str] = None
+    completed_at: Optional[str] = None
 
     @computed_field
     @property
@@ -111,6 +115,44 @@ def task_to_response(task: dict) -> TodoResponse:
     task_copy.pop("_id", None)
     return TodoResponse(**task_copy)
 
+def sort_tasks(tasks: List[dict]) -> List[dict]:
+    def sort_key(task):
+        completed = task.get("completed", False)
+        due_date_str = task.get("due_date")
+        expired = is_expired(due_date_str)
+        has_date = bool(due_date_str) and not expired
+
+        if completed:
+            completed_at = task.get("completed_at")
+            try:
+                completed_time = datetime.fromisoformat(completed_at) if completed_at else datetime.min
+            except (ValueError, TypeError):
+                completed_time = datetime.min
+            return (4, -completed_time.timestamp())
+        
+        if expired:
+            try:
+                due_date = datetime.fromisoformat(due_date_str + "T00:00:00") if len(due_date_str) == 10 else datetime.fromisoformat(due_date_str)
+            except (ValueError, TypeError):
+                due_date = datetime.max
+            return (3, due_date.timestamp())
+        
+        if has_date:
+            try:
+                due_date = datetime.fromisoformat(due_date_str + "T00:00:00") if len(due_date_str) == 10 else datetime.fromisoformat(due_date_str)
+            except (ValueError, TypeError):
+                due_date = datetime.max
+            return (2, due_date.timestamp())
+        
+        created_at = task.get("created_at") or "1970-01-01T00:00:00"
+        try:
+            created_time = datetime.fromisoformat(created_at)
+        except (ValueError, TypeError):
+            created_time = datetime.min
+        return (1, -created_time.timestamp())
+    
+    return sorted(tasks, key=sort_key)
+
 @app.get("/todos/expired", response_model=list[TodoResponse])
 async def get_expired_todos():
     tasks = []
@@ -124,19 +166,26 @@ async def get_expired_todos():
 @app.get("/todos", response_model=list[TodoResponse])
 async def get_todos():
     tasks = []
-    cursor = tasks_collection.find().sort("id", 1)
+    cursor = tasks_collection.find()
     async for task in cursor:
-        tasks.append(task_to_response(task))
-    return tasks
+        task.pop("_id", None)
+        tasks.append(task)
+
+    sorted_tasks = sort_tasks(tasks)
+
+    return [TodoResponse(**task) for task in sorted_tasks]
 
 @app.post("/todos", response_model=TodoItem)
 async def create_todo(todo: TodoCreate):
+
     new_task = {
         "id": await get_next_task_id(),
         "title": todo.title,
         "completed": todo.completed,
         "due_date": todo.due_date,
-        "tags": todo.tags or []
+        "tags": todo.tags or [],
+        "created_at": datetime.now().isoformat(),
+        "completed_at": None
     }
 
     await tasks_collection.insert_one(new_task)
@@ -144,20 +193,28 @@ async def create_todo(todo: TodoCreate):
 
 @app.put("/todos/{todo_id}", response_model=TodoItem)
 async def update_todo(todo_id: int, updated_todo: TodoUpdate):
+    existing_task = await tasks_collection.find_one({"id": todo_id})
+    if not existing_task:
+        raise HTTPException(status_code=404, detail=TODO_NOT_FOUND_MSG)
+    
+    completed_at = existing_task.get("completed_at")
+    if updated_todo.completed and not existing_task.get("completed"):
+        completed_at = datetime.now().isoformat()
+    elif not updated_todo.completed and existing_task.get("completed"):
+        completed_at = None
+    
     updated_task = {
         "title": updated_todo.title,
         "completed": updated_todo.completed,
         "due_date": updated_todo.due_date,
-        "tags": updated_todo.tags or []
+        "tags": updated_todo.tags or [],
+        "completed_at": completed_at
     }
 
-    result = await tasks_collection.update_one(
+    await tasks_collection.update_one(
         {"id": todo_id},
         {"$set": updated_task}
     )
-
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail=TODO_NOT_FOUND_MSG)
     
     task = await tasks_collection.find_one({"id": todo_id})
     task.pop("_id", None)
@@ -172,12 +229,19 @@ async def toggle_todo_completion(todo_id: int):
     
     new_completed_status = not task["completed"]
 
+    update_data = {
+        "completed": new_completed_status,
+        "completed_at": datetime.now().isoformat() if new_completed_status else None
+    }
+
     await tasks_collection.update_one(
         {"id": todo_id},
-        {"$set": {"completed": new_completed_status}}
+        {"$set": update_data}
     )
 
     task["completed"] = new_completed_status
+    task["completed_at"] = update_data["completed_at"]
+    task = await tasks_collection.find_one({"id": todo_id})
     task.pop("_id", None)
     return TodoItem(**task)
 

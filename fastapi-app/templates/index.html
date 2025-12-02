@@ -363,46 +363,16 @@
                     return;
                 }
                 
-                // 할일 정렬
-                const sortedTodos = [...todos].sort((a, b) => {
-                    // 4. 완료된 할일들 (완료된 순서)
-                    if (a.completed && !b.completed) return 1;
-                    if (!a.completed && b.completed) return -1;
-                    if (a.completed && b.completed) {
-                        return new Date(b.completed_at || 0) - new Date(a.completed_at || 0);
-                    }
-                    
-                    // 3. 기한 지난 할일들 (날짜순)
-                    if (a.expired && !b.expired) return 1;
-                    if (!a.expired && b.expired) return -1;
-                    if (a.expired && b.expired) {
-                        return new Date(a.due_date) - new Date(b.due_date);
-                    }
-                    
-                    // 1. 날짜 지정되지 않은 할일 vs 2. 마감되지 않은 할일
-                    const aHasDate = a.due_date && !a.expired;
-                    const bHasDate = b.due_date && !b.expired;
-                    
-                    if (!aHasDate && bHasDate) return -1;
-                    if (aHasDate && !bHasDate) return 1;
-                    
-                    // 2. 마감되지 않은 할일들 (날짜순)
-                    if (aHasDate && bHasDate) {
-                        return new Date(a.due_date) - new Date(b.due_date);
-                    }
-                    
-                    // 1. 날짜 지정되지 않은 할일들 (생성순 - 최신순)
-                    return new Date(b.created_at || 0) - new Date(a.created_at || 0);
-                });
-                
+                // 백엔드에서 정렬된 순서대로 표시
                 todoList.innerHTML = '';
-                sortedTodos.forEach(todo => {
+                todos.forEach(todo => {
                     const li = document.createElement('li');
                     
                     if (todo.completed) {
                         li.classList.add('completed');
                     }
                     
+                    // 백엔드에서 계산된 expired 필드 사용
                     if (todo.expired && !todo.completed) {
                         li.classList.add('expired');
                     }
@@ -512,7 +482,7 @@
                 const data = {
                     title: formData.get('title').trim(),
                     due_date: formData.get('due_date') || null,
-                    tags: formData.get('tags').split(',').map(t => t.trim()),
+                    tags: formData.get('tags').split(',').map(t => t.trim()).filter(t => t),
                     completed: todo?.completed || false
                 };
 
@@ -583,7 +553,7 @@
             const title = document.getElementById('title').value.trim();
             const dueDate = document.getElementById('due-date').value || null;
             const tagInput = document.getElementById('tag').value.trim();
-            const tags = tagInput ? tagInput.split(',').map(t => t.trim()) : [];
+            const tags = tagInput ? tagInput.split(',').map(t => t.trim()).filter(t => t) : [];
 
             if (!title) {
                 alert('Please fill in the title');
