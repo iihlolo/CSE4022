@@ -5,15 +5,32 @@ services:
     build:
       context: ./fastapi-app
       dockerfile: Dockerfile
-    container_name: FastApi-app
+    container_name: fastapi-app
     ports:
       - "8008:5001"
+    depends_on:
+      - mongo
+      - loki
+    restart: always
+    environment:
+      - MONGODB_URL=mongodb://admin:admin@mongo:27017/todo_db?authSource=admin
+      - LOKI_ENDPOINT=http://loki:3100/loki/api/v1/push
     networks:
       - loadtest-net
-    depends_on:
-      - loki
+  
+  mongo:
+    image: mongo:6.0
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    restart: always
     environment:
-      - LOKI_ENDPOINT=http://loki:3100/loki/api/v1/push
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin
+    volumes:
+      - mongo_data:/data/db
+    networks:
+     - loadtest-net
 
   sonarqube:
     image: sonarqube:latest
@@ -55,10 +72,10 @@ services:
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
-    volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "7070:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
     networks:
@@ -93,6 +110,7 @@ services:
       - loadtest-net
 
 volumes:
+  mongo_data:
   sonarqube_conf:
   sonarqube_data:
   sonarqube_logs:
